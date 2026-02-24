@@ -47,77 +47,7 @@
                 ></textarea>
             </div>
         </section>
-
-        <!-- Help & Explanation Section -->
-        <section class="help-section">
-
-            <!-- Cipher Explanation -->
-            <button 
-                type="button" 
-                class="info-btn" 
-                onclick="toggleGuide()"
-                aria-expanded="false"
-                aria-controls="guide"
-            >
-                How the Cipher Works
-            </button>
-
-            <div id="guide" class="guide hidden" role="region" aria-labelledby="guide-title">
-                <h2 id="guide-title">How the Cipher Works</h2>
-
-                <p>
-                    The Tubigon Shift–Swap Cipher is a custom encryption method that protects messages
-                    using alphabet substitution, letter shifting, and number masking.
-                </p>
-
-                <p>
-                    The system converts all input text to uppercase, substitutes letters using a custom
-                    alphabet, and shifts them using a fixed key. Numbers are replaced with symbols, while
-                    spaces and punctuation are preserved.
-                </p>
-
-                <p>
-                    Decryption reverses these steps using the same keys to recover the original message.
-                </p>
-
-                <button type="button" onclick="toggleGuide()">Close</button>
-            </div>
-
-            <!-- Cipher Key (Educational Only) -->
-            <button 
-                type="button" 
-                class="info-btn" 
-                onclick="toggleKey()"
-                aria-expanded="false"
-                aria-controls="keyInfo"
-            >
-                Show Cipher Key
-            </button>
-
-            <div id="keyInfo" class="guide hidden" role="region" aria-labelledby="key-title">
-                <h2 id="key-title">Cipher Key Information</h2>
-
-                <p><strong>Normal Alphabet:</strong></p>
-                <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
-
-                <p><strong>Tubigon Alphabet:</strong></p>
-                <p>T U B I G O N A C D E F H J K L M P Q R S V W X Y Z</p>
-
-                <p><strong>Shift Key:</strong> 2</p>
-
-                <p><strong>Number Masking:</strong></p>
-                <p>1 → ! &nbsp; 2 → @ &nbsp; 3 → # &nbsp; 4 → $ &nbsp; 5 → %</p>
-
-                <p><em style="color: #f56565;">This information is displayed for educational purposes only.
-                    If it will be implemented in the future, it will be removed.
-                </em></p>
-
-                <button type="button" onclick="toggleKey()">Close</button>
-            </div>
-            
-
-        </section>
-    </main>
+        
 
     <script src="script.js"></script>
 
