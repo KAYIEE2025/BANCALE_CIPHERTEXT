@@ -1,6 +1,6 @@
 /**
  * Tubigon Pattern-Key Cipher System (TPKC)
- * Custom non-Caesar cipher using pattern-based multiplication
+ * Fully reversible non-Caesar cipher
  * IAS 101 – Educational Purpose
  */
 
@@ -8,25 +8,25 @@ class TubigonPatternCipher {
     constructor() {
         this.ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        // 🔑 Secret pattern key (can be changed)
-        this.PATTERN_KEY = [3, 1, 4, 2];
+        // ✅ ALL values are coprime with 26
+        this.PATTERN_KEY = [3, 5, 7, 11];
     }
 
-    /* ================= CORE UTILITIES ================= */
+    /* ============ CORE UTILITIES ============ */
 
     letterToNumber(letter) {
-        return this.ALPHABET.indexOf(letter) + 1;
+        return this.ALPHABET.indexOf(letter); // A=0 ... Z=25
     }
 
     numberToLetter(number) {
-        return this.ALPHABET[(number - 1 + 26) % 26];
+        return this.ALPHABET[(number + 26) % 26];
     }
 
     modularInverse(a, mod = 26) {
         for (let i = 1; i < mod; i++) {
             if ((a * i) % mod === 1) return i;
         }
-        return 1; // safe fallback
+        throw new Error(`Invalid key ${a}: no modular inverse modulo 26`);
     }
 
     validateInput(text, action) {
@@ -35,7 +35,7 @@ class TubigonPatternCipher {
         }
     }
 
-    /* ================= ENCRYPTION ================= */
+    /* ============ ENCRYPTION ============ */
 
     encrypt(text) {
         this.validateInput(text, "encrypt");
@@ -46,22 +46,21 @@ class TubigonPatternCipher {
 
         for (let char of text) {
             if (this.ALPHABET.includes(char)) {
-                const letterValue = this.letterToNumber(char);
+                const p = this.letterToNumber(char);
                 const key = this.PATTERN_KEY[keyIndex % this.PATTERN_KEY.length];
 
-                let encryptedValue = (letterValue * key) % 26;
-                if (encryptedValue === 0) encryptedValue = 26;
+                const c = (p * key) % 26;
+                result += this.numberToLetter(c);
 
-                result += this.numberToLetter(encryptedValue);
                 keyIndex++;
             } else {
-                result += char; // keep spaces & symbols
+                result += char;
             }
         }
         return result;
     }
 
-    /* ================= DECRYPTION ================= */
+    /* ============ DECRYPTION ============ */
 
     decrypt(text) {
         this.validateInput(text, "decrypt");
@@ -72,14 +71,13 @@ class TubigonPatternCipher {
 
         for (let char of text) {
             if (this.ALPHABET.includes(char)) {
-                const cipherValue = this.letterToNumber(char);
+                const c = this.letterToNumber(char);
                 const key = this.PATTERN_KEY[keyIndex % this.PATTERN_KEY.length];
-                const inverseKey = this.modularInverse(key);
+                const inv = this.modularInverse(key);
 
-                let decryptedValue = (cipherValue * inverseKey) % 26;
-                if (decryptedValue === 0) decryptedValue = 26;
+                const p = (c * inv) % 26;
+                result += this.numberToLetter(p);
 
-                result += this.numberToLetter(decryptedValue);
                 keyIndex++;
             } else {
                 result += char;
@@ -89,11 +87,11 @@ class TubigonPatternCipher {
     }
 }
 
-/* ================= INITIALIZATION ================= */
+/* ============ INITIALIZATION ============ */
 
 const cipher = new TubigonPatternCipher();
 
-/* ================= UI HANDLERS ================= */
+/* ============ UI HANDLERS ============ */
 
 function encrypt() {
     try {
@@ -106,25 +104,9 @@ function encrypt() {
 
 function decrypt() {
     try {
-        const input = document.getElementById("inputText").value;
+        const input = document.getElementById("outputText").value;
         document.getElementById("outputText").value = cipher.decrypt(input);
     } catch (err) {
         alert(err.message);
     }
-}
-
-/* ================= INFO TOGGLES ================= */
-
-function toggleGuide() {
-    const guide = document.getElementById("guide");
-    const button = document.querySelector('button[aria-controls="guide"]');
-    const hidden = guide.classList.toggle("hidden");
-    button.setAttribute("aria-expanded", !hidden);
-}
-
-function toggleKey() {
-    const keyInfo = document.getElementById("keyInfo");
-    const button = document.querySelector('button[aria-controls="keyInfo"]');
-    const hidden = keyInfo.classList.toggle("hidden");
-    button.setAttribute("aria-expanded", !hidden);
 }
