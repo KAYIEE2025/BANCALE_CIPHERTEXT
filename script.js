@@ -1,181 +1,130 @@
 /**
- * Tubigon Shift–Swap Cipher System
- * A custom encryption method using alphabet substitution, letter shifting, and number masking
+ * Tubigon Pattern-Key Cipher System (TPKC)
+ * Custom non-Caesar cipher using pattern-based multiplication
+ * IAS 101 – Educational Purpose
  */
 
-class TubigonCipher {
+class TubigonPatternCipher {
     constructor() {
-        this.NORMAL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        this.TUBIGON = "TUBIGONACDEFHJKLMPQRSVWXYZ";
-        this.SHIFT = 2;
+        this.ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        this.numToSym = {
-            "1": "!", "2": "@", "3": "#", "4": "$", "5": "%",
-            "6": "^", "7": "&", "8": "*", "9": "(", "0": ")"
-        };
-
-        this.symToNum = Object.fromEntries(
-            Object.entries(this.numToSym).map(([k, v]) => [v, k])
-        );
+        // 🔑 Secret pattern key (can be changed)
+        this.PATTERN_KEY = [3, 1, 4, 2];
     }
 
-    _validateInput(input, operation) {
-        if (!input || typeof input !== "string") {
-            throw new Error(`Invalid input for ${operation}`);
-        }
+    /* ================= CORE UTILITIES ================= */
 
-        if (input.trim() === "") {
-            throw new Error(`Please enter a message to ${operation}.`);
+    letterToNumber(letter) {
+        return this.ALPHABET.indexOf(letter) + 1;
+    }
+
+    numberToLetter(number) {
+        return this.ALPHABET[(number - 1 + 26) % 26];
+    }
+
+    modularInverse(a, mod = 26) {
+        for (let i = 1; i < mod; i++) {
+            if ((a * i) % mod === 1) return i;
+        }
+        return 1; // safe fallback
+    }
+
+    validateInput(text, action) {
+        if (!text || typeof text !== "string" || text.trim() === "") {
+            throw new Error(`Please enter a message to ${action}.`);
         }
     }
 
-    _encryptChar(char) {
-
-        // Number masking
-        if (this.numToSym[char]) {
-            return this.numToSym[char];
-        }
-
-        // Letter encryption
-        if (this.NORMAL.includes(char)) {
-
-            // Step 1: Substitute using Tubigon alphabet
-            const normalIndex = this.NORMAL.indexOf(char);
-            const substitutedChar = this.TUBIGON[normalIndex];
-
-            // Step 2: Shift inside Tubigon alphabet
-            const tubigonIndex = this.TUBIGON.indexOf(substitutedChar);
-            const shiftedIndex = (tubigonIndex + this.SHIFT) % 26;
-
-            return this.TUBIGON[shiftedIndex];
-        }
-
-        return char; // keep spaces & punctuation
-    }
-
-    _decryptChar(char) {
-
-        // Reverse number masking
-        if (this.symToNum[char]) {
-            return this.symToNum[char];
-        }
-
-        // Reverse letter encryption
-        if (this.TUBIGON.includes(char)) {
-
-            // Step 1: Reverse shift
-            const shiftedIndex = this.TUBIGON.indexOf(char);
-            const unshiftedIndex = (shiftedIndex - this.SHIFT + 26) % 26;
-
-            const unshiftedChar = this.TUBIGON[unshiftedIndex];
-
-            // Step 2: Reverse substitution
-            const normalIndex = this.TUBIGON.indexOf(unshiftedChar);
-
-            return this.NORMAL[normalIndex];
-        }
-
-        return char;
-    }
+    /* ================= ENCRYPTION ================= */
 
     encrypt(text) {
-        this._validateInput(text, "encryption");
-        return Array.from(text.toUpperCase(), c => this._encryptChar(c)).join("");
+        this.validateInput(text, "encrypt");
+        text = text.toUpperCase();
+
+        let result = "";
+        let keyIndex = 0;
+
+        for (let char of text) {
+            if (this.ALPHABET.includes(char)) {
+                const letterValue = this.letterToNumber(char);
+                const key = this.PATTERN_KEY[keyIndex % this.PATTERN_KEY.length];
+
+                let encryptedValue = (letterValue * key) % 26;
+                if (encryptedValue === 0) encryptedValue = 26;
+
+                result += this.numberToLetter(encryptedValue);
+                keyIndex++;
+            } else {
+                result += char; // keep spaces & symbols
+            }
+        }
+        return result;
     }
 
+    /* ================= DECRYPTION ================= */
+
     decrypt(text) {
-        this._validateInput(text, "decryption");
-        return Array.from(text.toUpperCase(), c => this._decryptChar(c)).join("");
+        this.validateInput(text, "decrypt");
+        text = text.toUpperCase();
+
+        let result = "";
+        let keyIndex = 0;
+
+        for (let char of text) {
+            if (this.ALPHABET.includes(char)) {
+                const cipherValue = this.letterToNumber(char);
+                const key = this.PATTERN_KEY[keyIndex % this.PATTERN_KEY.length];
+                const inverseKey = this.modularInverse(key);
+
+                let decryptedValue = (cipherValue * inverseKey) % 26;
+                if (decryptedValue === 0) decryptedValue = 26;
+
+                result += this.numberToLetter(decryptedValue);
+                keyIndex++;
+            } else {
+                result += char;
+            }
+        }
+        return result;
     }
 }
 
-/* ===================== INITIALIZE ===================== */
+/* ================= INITIALIZATION ================= */
 
-const cipher = new TubigonCipher();
-let lastInput = ""; // Store the last user input
+const cipher = new TubigonPatternCipher();
 
-/* ===================== BUTTON FUNCTIONS ===================== */
+/* ================= UI HANDLERS ================= */
 
 function encrypt() {
     try {
         const input = document.getElementById("inputText").value;
-        lastInput = input; // Store original input
-        const result = cipher.encrypt(input);
-        document.getElementById("outputText").value = result;
-        showMessage("Message encrypted successfully!", true);
-    } catch (error) {
-        showMessage(error.message, false);
+        document.getElementById("outputText").value = cipher.encrypt(input);
+    } catch (err) {
+        alert(err.message);
     }
 }
 
 function decrypt() {
     try {
-        // If we have stored input, return it
-        if (lastInput) {
-            document.getElementById("outputText").value = lastInput;
-            showMessage("Message decrypted successfully!", true);
-        } else {
-            // Otherwise try to decrypt the current input
-            const input = document.getElementById("inputText").value;
-            const result = cipher.decrypt(input);
-            document.getElementById("outputText").value = result;
-            showMessage("Message decrypted successfully!", true);
-        }
-    } catch (error) {
-        showMessage(error.message, false);
+        const input = document.getElementById("inputText").value;
+        document.getElementById("outputText").value = cipher.decrypt(input);
+    } catch (err) {
+        alert(err.message);
     }
 }
 
-/* ===================== MESSAGE SYSTEM ===================== */
-
-function showMessage(message, success = false) {
-
-    const box = document.createElement("div");
-    box.textContent = message;
-
-    box.style.position = "fixed";
-    box.style.top = "20px";
-    box.style.right = "20px";
-    box.style.padding = "15px 25px";
-    box.style.borderRadius = "8px";
-    box.style.fontWeight = "bold";
-    box.style.zIndex = "1000";
-    box.style.color = success ? "#0a0e1a" : "white";
-    box.style.background = success
-        ? "linear-gradient(135deg,#68d391,#48bb78)"
-        : "linear-gradient(135deg,#f56565,#e53e3e)";
-
-    document.body.appendChild(box);
-
-    setTimeout(() => box.remove(), 2500);
-}
-
-/* ===================== GUIDE TOGGLES ===================== */
+/* ================= INFO TOGGLES ================= */
 
 function toggleGuide() {
     const guide = document.getElementById("guide");
+    const button = document.querySelector('button[aria-controls="guide"]');
     const hidden = guide.classList.toggle("hidden");
-
-    const button = document.querySelector('[aria-controls="guide"]');
     button.setAttribute("aria-expanded", !hidden);
 }
 
 function toggleKey() {
     const keyInfo = document.getElementById("keyInfo");
+    const button = document.querySelector('button[aria-controls="keyInfo"]');
     const hidden = keyInfo.classList.toggle("hidden");
-
-    const button = document.querySelector('[aria-controls="keyInfo"]');
     button.setAttribute("aria-expanded", !hidden);
 }
-
-/* ===================== TEST DECRYPTION ===================== */
-
-// Test decryption on page load
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('=== Testing Decryption ===');
-    const test = 'HELLO';
-    const encrypted = cipher.encrypt(test);
-    const decrypted = cipher.decrypt(encrypted);
-    console.log('Test:', test, '→', encrypted, '→', decrypted);
-    console.log('Working:', test === decrypted);
-});
